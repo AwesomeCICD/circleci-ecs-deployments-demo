@@ -9,7 +9,7 @@ parameters:
     default: "us-east-1"
   aws-oidc-role:
     type: string
-    default: arn:aws:iam::<< pipeline.parameters.account-id >>:role/fieldeng_circleci_labs_oidc_oauth_role
+    default: arn:aws:iam::992382483259:role/fieldeng_circleci_labs_oidc_oauth_role
   aws-oidc-profile-name:
     type: string
     default: "CircleCI-OIDC-User"
@@ -86,7 +86,6 @@ jobs:
     executor: ubuntu-default
     steps:
       - checkout
-      - aws-auth-setup
       - aws-ecr/build_and_push_image:
           account_id: << pipeline.parameters.account-id >>
           auth:
