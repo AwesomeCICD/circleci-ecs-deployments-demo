@@ -1,7 +1,7 @@
 
 
 variable "container_port" {
-  type = number
+  type        = number
   description = "Container Port"
   default     = 5000
 }
@@ -51,7 +51,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
 resource "aws_security_group" "lb" {
   name        = "lb-security-group"
   description = "Allow HTTP traffic"
-  vpc_id      = var.vpc_id  
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = var.container_port
@@ -82,7 +82,7 @@ resource "aws_lb" "ecs_demo" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.lb.id]
-  subnets            = var.subnets  
+  subnets            = var.subnets
 }
 
 ## Fetch the DNS Name for the Load Balancer
@@ -130,12 +130,12 @@ resource "aws_ecs_task_definition" "ecs_demo" {
   container_definitions = jsonencode([
     {
       name      = "ecs_demo_container",
-      image     = "${aws_ecr_repository.ecs_demo.repository_url}:latest",  
+      image     = "${aws_ecr_repository.ecs_demo.repository_url}:latest",
       essential = true,
       environments = [
         {
-            env_var1 = "default-value1"
-            env_var2 = "default-value2"
+          env_var1 = "default-value1"
+          env_var2 = "default-value2"
         }
       ]
       portMappings = [
@@ -157,8 +157,8 @@ resource "aws_ecs_service" "ecs_demo" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = var.subnets
-    security_groups = [aws_security_group.lb.id]
+    subnets          = var.subnets
+    security_groups  = [aws_security_group.lb.id]
     assign_public_ip = true
   }
 
