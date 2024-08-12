@@ -10,6 +10,9 @@ parameters:
   aws-oidc-role:
     type: string
     default: arn:aws:iam::992382483259:role/fieldeng_circleci_labs_oidc_oauth_role
+  aws-oidc-profile-name:
+    type: string
+    default: "CircleCI-OIDC-User"
   use-aws-orbs:
     type: boolean
     default: true
@@ -120,9 +123,9 @@ jobs:
                 region: << pipeline.parameters.aws-default-region >>
                 role_arn: << pipeline.parameters.aws-oidc-role >> 
                 role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
-                profile_name: "CircleCI-OIDC-User"
+                profile_name: << pipeline.parameters.aws-oidc-profile-name >> 
           no_output_timeout: 20m
-          profile_name: "CircleCI-OIDC-User"
+          profile_name: << pipeline.parameters.aws-oidc-profile-name >>
           repo: ecs-demo-repo
       - aws-auth-setup
       - run:
@@ -132,7 +135,7 @@ jobs:
               cd terraform
               ls -lah
       - aws-ecs/update_task_definition_from_json:
-          profile_name: oidc
+          profile_name: << pipeline.parameters.aws-oidc-profile-name >> 
           task_definition_json: terraform/my-task-definition.json
       - aws-ecs/update_service:
           cluster: ecs-demo-cluster
@@ -140,7 +143,7 @@ jobs:
           service_name: ecs_demo_service
           skip_task_definition_registration: true
           force_new_deployment: true
-          profile_name: "CircleCI-OIDC-User"
+          profile_name: << pipeline.parameters.aws-oidc-profile-name >>
 
 workflows:
   ecs:
