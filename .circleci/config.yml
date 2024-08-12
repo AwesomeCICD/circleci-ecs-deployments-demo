@@ -95,7 +95,7 @@ jobs:
       - checkout
       - aws-cli/setup:
           region: << pipeline.parameters.aws-default-region >>
-          profile_name: circleci-ecs-deployments
+          profile_name: << pipeline.parameters.aws-oidc-role >> 
           role_arn: << pipeline.parameters.aws-oidc-role >>
           role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
       - run:
