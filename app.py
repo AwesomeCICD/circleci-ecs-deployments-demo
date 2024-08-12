@@ -9,9 +9,9 @@ def home():
     env_var1 = os.getenv('ENV_VAR1')
     env_var2 = os.getenv('ENV_VAR2')
     return (
-        f"Hello, World!\n"
-        f"The CIRCLE_BUILD_NUM used for building this container was: {env_var1}\n"
-        f"The CIRCLE_SHA that generated this container was : {env_var2}\n"
+        f"Hello, World! <br>"
+        f"The CIRCLE_BUILD_NUM used for building this container was: {env_var1} <br>"
+        f"The CIRCLE_SHA that generated this container was : {env_var2} <br>"
     )
 
 if __name__ == '__main__':
