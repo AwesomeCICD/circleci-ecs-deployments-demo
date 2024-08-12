@@ -5,12 +5,12 @@ variable "aws_region" {
 }
 
 ## Use only if you are using AWS Keys
-variable "aws_access_key" {
-  description = "Access key used to create instances"
-}
-
-## Use only if you are using AWS Keys
-variable "aws_secret_key" {
-  description = "Secret key used to create instances"
-}
+#variable "aws_access_key" {
+#  description = "Access key used to create instances"
+#}
+#
+### Use only if you are using AWS Keys
+#variable "aws_secret_key" {
+#  description = "Secret key used to create instances"
+#}
 
