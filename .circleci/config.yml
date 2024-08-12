@@ -113,21 +113,24 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - aws-ecr/build_and_push_image:
-          account_id: << pipeline.parameters.account-id >>
-          auth:
-            - aws-cli/setup:
-                region: << pipeline.parameters.aws-default-region >>
-                role_arn: << pipeline.parameters.aws-oidc-role >> 
-                role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
-                profile_name: "CircleCI-OIDC-User"
-          no_output_timeout: 20m
-          profile_name: "CircleCI-OIDC-User"
-          repo: ecs-demo-repo
-      - aws-auth-setup
+      #- aws-ecr/build_and_push_image:
+      #    account_id: << pipeline.parameters.account-id >>
+      #    auth:
+      #      - aws-cli/setup:
+      #          region: << pipeline.parameters.aws-default-region >>
+      #          role_arn: << pipeline.parameters.aws-oidc-role >> 
+      #          role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+      #          profile_name: "CircleCI-OIDC-User"
+      #    no_output_timeout: 20m
+      #    profile_name: "CircleCI-OIDC-User"
+      #    repo: ecs-demo-repo
+      #- aws-auth-setup
       - run:
           name: show working directory
-          command: ls -lah
+          command: |
+              ls -lah
+              cd terraform
+              ls -lah
       #- aws-ecs/update_task_definition_from_json:
       #    profile_name: oidc
       #    task_definition_json: my-task-definition.json
