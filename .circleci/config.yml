@@ -9,7 +9,7 @@ parameters:
     default: "us-east-1"
   aws-oidc-role:
     type: string
-    default: arn:aws:iam::992382483259:role/fieldeng_circleci_labs_oidc_oauth_role
+    default: arn:aws:iam::<< pipeline.parameters.account-id >>:role/fieldeng_circleci_labs_oidc_oauth_role
   aws-oidc-profile-name:
     type: string
     default: "CircleCI-OIDC-User"
@@ -61,13 +61,6 @@ commands:
             docker tag $ECS_DEMO_IMAGE:latest $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
             echo -e "\033[0;32mReady to push image to ECR....\033[0m"
             docker push $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
-      - run:
-          name: push to ECR if build is successful
-          command: |
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_IMAGE_REPO
-            docker tag $ECS_DEMO_IMAGE:latest $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
-            echo -e "\033[0;32mReady to push image to ECR....\033[0m"
-            docker push $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
 
 
 executors:
@@ -89,6 +82,22 @@ executors:
       AWS_DEFAULT_REGION: << pipeline.parameters.aws-default-region >>
 
 jobs: 
+  build-and-push-image:
+    executor: ubuntu-default
+    steps:
+      - checkout
+      - aws-ecr/build_and_push_image:
+          account_id: << pipeline.parameters.account-id >>
+          auth:
+            - aws-cli/setup:
+                region: << pipeline.parameters.aws-default-region >>
+                role_arn: << pipeline.parameters.aws-oidc-role >> 
+                role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+                profile_name: << pipeline.parameters.aws-oidc-profile-name >> 
+          no_output_timeout: 20m
+          profile_name: << pipeline.parameters.aws-oidc-profile-name >>
+          repo: ecs-demo-repo
+
   generate-task-definition-config:
     executor: tf-docker
     steps:
@@ -111,29 +120,14 @@ jobs:
             - .
 
   deploy-ecs:
-    executor: ubuntu-default
+    docker:
+      - image: cimg/python:3.10.4
+    resource_class: small
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - aws-ecr/build_and_push_image:
-          account_id: << pipeline.parameters.account-id >>
-          auth:
-            - aws-cli/setup:
-                region: << pipeline.parameters.aws-default-region >>
-                role_arn: << pipeline.parameters.aws-oidc-role >> 
-                role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
-                profile_name: << pipeline.parameters.aws-oidc-profile-name >> 
-          no_output_timeout: 20m
-          profile_name: << pipeline.parameters.aws-oidc-profile-name >>
-          repo: ecs-demo-repo
       - aws-auth-setup
-      - run:
-          name: show working directory
-          command: |
-              ls -lah
-              cd terraform
-              ls -lah
       - aws-ecs/update_task_definition_from_json:
           profile_name: << pipeline.parameters.aws-oidc-profile-name >> 
           task_definition_json: terraform/my-task-definition.json
@@ -146,12 +140,15 @@ jobs:
           profile_name: << pipeline.parameters.aws-oidc-profile-name >>
 
 workflows:
-  ecs:
+  ecs-workflow:
     when: 
       and: 
        - equal: [true, << pipeline.parameters.use-aws-orbs >>]
     jobs:
-      - generate-task-definition-config
+      - build-and-push-image
+      - generate-task-definition-config:
+           requires:
+              - build-and-push-image
       - deploy-ecs:
            requires:
               - generate-task-definition-config
