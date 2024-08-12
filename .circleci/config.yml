@@ -1,6 +1,9 @@
 version: 2.1
 
 parameters:
+  aws-oidc-role:
+    type: string
+    default: arn:aws:iam::992382483259:role/fieldeng_circleci_labs_oidc_oauth_role
   use-aws-orbs:
     type: boolean
     default: true
@@ -15,8 +18,9 @@ commands:
     steps:
        - aws-cli/setup:
             region: us-east-1
-            role_arn: AWS_OIDC_ROLE
+            role_arn: << pipeline.parameters.aws-oidc-role >>
             role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+
   manual-push-to-ecr:
     steps:
       - checkout
@@ -73,41 +77,45 @@ executors:
     resource_class: small
 
 jobs: 
-  tf-plan:
+  generate-task-definition-config:
     executor: tf-docker
     steps:
       - checkout
       - aws-cli/setup:
           region: us-east-1
           profile_name: circleci-ecs-deployments
-          role_arn: arn:aws:iam::992382483259:role/fieldeng_circleci_labs_oidc_oauth_role
+          role_arn: << pipeline.parameters.aws-oidc-role >>
           role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
       - run:
           name: Run terraform plan
           command: |
                cd terraform
                terraform init -input=false
-               terraform plan -out tfapply
+               terraform plan -out tfapply -var="env_var1=$CIRCLE_BUILD_NUM" -var="aws_secret_key=$CIRCLE_SHA1"
+               terraform apply -auto-approve tfapply
       - persist_to_workspace:
           root: .
           paths:
             - .
 
-  ecs-build:
+  deploy-ecs:
     executor: ubuntu-default
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - aws-ecr/build_and_push_image:
           account_id: ACCOUNT_ID
           auth:
             - aws-cli/setup:
                 region: us-east-1
-                role_arn: AWS_OIDC_ROLE
+                role_arn: << pipeline.parameters.aws-oidc-role >> 
                 role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
                 profile_name: oidc
           no_output_timeout: 20m
           profile_name: oidc
           repo: ecs-demo-repo
+      - aws-auth-setup
       - aws-ecs/update_task_definition_from_json:
           profile_name: oidc
           task_definition_json: my-task-definition.json
@@ -125,4 +133,7 @@ workflows:
       and: 
        - equal: [true, << pipeline.parameters.use-aws-orbs >>]
     jobs:
-      - tf-plan
+      - generate-task-definition-config
+      - deploy-ecs:
+           requires:
+              - generate-task-definition-config
