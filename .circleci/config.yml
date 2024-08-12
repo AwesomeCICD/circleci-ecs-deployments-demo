@@ -1,6 +1,9 @@
 version: 2.1
 
 parameters:
+  account-id:
+    type: string
+    default: "992382483259"
   aws-oidc-role:
     type: string
     default: arn:aws:iam::992382483259:role/fieldeng_circleci_labs_oidc_oauth_role
@@ -105,7 +108,7 @@ jobs:
       - attach_workspace:
           at: .
       - aws-ecr/build_and_push_image:
-          account_id: ACCOUNT_ID
+          account_id: << pipeline.parameters.account-id >>
           auth:
             - aws-cli/setup:
                 region: us-east-1
