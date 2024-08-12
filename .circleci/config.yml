@@ -120,7 +120,7 @@ jobs:
                 region: << pipeline.parameters.aws-default-region >>
                 role_arn: << pipeline.parameters.aws-oidc-role >> 
                 role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
-                profile_name: oidc
+                profile_name: "CircleCI-OIDC-User"
           no_output_timeout: 20m
           profile_name: "CircleCI-OIDC-User"
           repo: ecs-demo-repo
