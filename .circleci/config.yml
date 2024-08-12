@@ -125,16 +125,19 @@ jobs:
           profile_name: "CircleCI-OIDC-User"
           repo: ecs-demo-repo
       - aws-auth-setup
-      - aws-ecs/update_task_definition_from_json:
-          profile_name: oidc
-          task_definition_json: my-task-definition.json
-      - aws-ecs/update_service:
-          cluster: ecs-demo-cluster
-          family: ecs_demo_task
-          service_name: ecs_demo_service
-          skip_task_definition_registration: true
-          force_new_deployment: true
-          profile_name: "CircleCI-OIDC-User"
+      - run:
+          name: show working directory
+          command: ls -lah
+      #- aws-ecs/update_task_definition_from_json:
+      #    profile_name: oidc
+      #    task_definition_json: my-task-definition.json
+      #- aws-ecs/update_service:
+      #    cluster: ecs-demo-cluster
+      #    family: ecs_demo_task
+      #    service_name: ecs_demo_service
+      #    skip_task_definition_registration: true
+      #    force_new_deployment: true
+      #    profile_name: "CircleCI-OIDC-User"
 
 workflows:
   ecs:
