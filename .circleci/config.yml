@@ -4,6 +4,9 @@ parameters:
   account-id:
     type: string
     default: "992382483259"
+  aws-default-region:
+    type: string
+    default: "us-east-1"
   aws-oidc-role:
     type: string
     default: arn:aws:iam::992382483259:role/fieldeng_circleci_labs_oidc_oauth_role
@@ -20,7 +23,7 @@ commands:
   aws-auth-setup:
     steps:
        - aws-cli/setup:
-            region: us-east-1
+            region: << pipeline.parameters.aws-default-region >>
             role_arn: << pipeline.parameters.aws-oidc-role >>
             role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
 
@@ -73,11 +76,14 @@ executors:
     environment:
       DOCKER_BULDKIT: "1"
       CONTAINER_PORT: 5000
+      AWS_DEFAULT_REGION: << pipeline.parameters.aws-default-region >>
 
   tf-docker:
     docker:
       - image: hashicorp/terraform:1.8.3
     resource_class: small
+    environment: 
+      AWS_DEFAULT_REGION: << pipeline.parameters.aws-default-region >>
 
 jobs: 
   generate-task-definition-config:
@@ -85,7 +91,7 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          region: us-east-1
+          region: << pipeline.parameters.aws-default-region >>
           profile_name: circleci-ecs-deployments
           role_arn: << pipeline.parameters.aws-oidc-role >>
           role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
@@ -111,12 +117,12 @@ jobs:
           account_id: << pipeline.parameters.account-id >>
           auth:
             - aws-cli/setup:
-                region: us-east-1
+                region: << pipeline.parameters.aws-default-region >>
                 role_arn: << pipeline.parameters.aws-oidc-role >> 
                 role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
                 profile_name: oidc
           no_output_timeout: 20m
-          profile_name: oidc
+          profile_name: "CircleCI-OIDC-User"
           repo: ecs-demo-repo
       - aws-auth-setup
       - aws-ecs/update_task_definition_from_json:
@@ -128,7 +134,7 @@ jobs:
           service_name: ecs_demo_service
           skip_task_definition_registration: true
           force_new_deployment: true
-          profile_name: oidc
+          profile_name: "CircleCI-OIDC-User"
 
 workflows:
   ecs:
