@@ -1,0 +1,122 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@4.1.3
+  aws-ecs: circleci/aws-ecs@4.0.0
+  aws-ecr: circleci/aws-ecr@9.2.0
+
+commands:
+  aws-auth-setup:
+    steps:
+       - aws-cli/setup:
+            region: us-east-1
+            role_arn:  AWS_OIDC_ROLE
+            role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+  manual-push-to-ecr:
+    steps:
+      - run:
+          name: push to ECR if build is successful
+          command: |
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_IMAGE_REPO
+            docker tag $ECS_DEMO_IMAGE:latest $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
+            echo -e "\033[0;32mReady to push image to ECR....\033[0m"
+            docker push $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
+  
+
+parameters:
+  account-id:
+    type: string
+  ecs-image:
+    type: string
+    default: "ecs-demo-repo"
+  aws-default-region:
+    type: string
+    default: "us-east-1"
+  main-wf:
+    type: boolean
+    default: true
+  role-name:
+    type: string
+  workspace:
+    default: "terraform"
+    type: string
+
+executors:
+  ubuntu-default:
+    machine:
+      image: ubuntu-2404:current
+      docker_layer_caching: true
+    resource_class: medium
+    environment:
+      DOCKER_BULDKIT: "1"
+      CONTAINER_PORT: 5000
+
+
+  terraform-docker:
+    docker:
+      - image: hashicorp/terraform:1.8.3
+    resource_class: large
+
+jobs: 
+  ecs-build:
+    executor: ubuntu-default
+    steps:
+      - checkout
+      - aws-ecr/build_and_push_image:
+          account_id: << pipeline.parameters.account-id >>
+          auth:
+            - aws-cli/setup:
+                region: us-east-1
+                role_arn: << pipeline.parameters.role-name >>
+                role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+                profile_name: oidc
+          no_output_timeout: 20m
+          profile_name: oidc
+          repo: ecs-demo-repo
+      #- run:
+      #    name: Build Docker image
+      #    command: |
+      #      docker build -t $ECS_DEMO_IMAGE .
+      #- run:
+      #    name: Run Docker container on port 5000 in detached mode...
+      #    command: |
+      #      echo "Running container in detached mode..."
+      #      docker run -d -p $CONTAINER_PORT:$CONTAINER_PORT -e ENV_VAR1=$CIRCLE_USERNAME -e ENV_VAR2=$CIRCLE_BUILD_NUM $ECS_DEMO_IMAGE
+      #- run: 
+      #    name: Perform Health Check
+      #    command: |
+      #       if curl http://localhost:$CONTAINER_PORT; then
+      #               printf "\n\nHealth Check was successful.."
+      #       else
+      #               echo "Request failed. Check if docker container is healthy..."
+      #               exit 1
+      #       fi
+      #- run: docker ps
+      #- run: docker images
+      #- run:
+      #    when: on_success
+      #    name: push to ECR if build is successful
+      #    command: |
+      #      aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_IMAGE_REPO
+      #      docker tag $ECS_DEMO_IMAGE:latest $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
+      #      echo -e "\033[0;32mReady to push image to ECR....\033[0m"
+      #      docker push $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
+      - aws-ecs/update_task_definition_from_json:
+          profile_name: oidc
+          task_definition_json: my-task-definition.json
+      - aws-ecs/update_service:
+          cluster: ecs-demo-cluster
+          family: ecs_demo_task
+          service_name: ecs_demo_service
+          skip_task_definition_registration: true
+          force_new_deployment: true
+          profile_name: oidc
+
+workflows:
+  ecs:
+    when: 
+      and: 
+       - equal: [true, << pipeline.parameters.main-wf >>]
+    jobs:
+      - ecs-build:
+           context: fieldeng-aws-context
