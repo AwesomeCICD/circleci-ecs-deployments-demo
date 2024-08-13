@@ -163,7 +163,7 @@ jobs:
       - checkout
       - aws-auth-setup
       - run:
-          name: Fetch latest ECS task-definition arn
+          name: Fetch latest ECS task-definition arn..
           command: |
             TASK_DEFINITION_ARN=$(aws ecs describe-task-definition --task-definition ecs_demo_task --output text --query 'taskDefinition.taskDefinitionArn' --profile << pipeline.parameters.aws-oidc-profile-name >>)
             echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
