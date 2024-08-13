@@ -174,7 +174,7 @@ jobs:
           profile_name: << pipeline.parameters.aws-oidc-profile-name >>
           task_definition_arn: ${TASK_DEFINITION_ARN}
   
-  build-env:
+  build-dev-env:
     executor: tf-docker
     steps:
       - checkout
@@ -187,7 +187,7 @@ jobs:
           name: Run terraform plan and apply
           no_output_timeout: 3h
           command: |
-               cd terraform
+               cd dev-env
                terraform init -input=false
                terraform plan -out tfapply -var="env_var1=$CIRCLE_BUILD_NUM" -var="env_var2=$CIRCLE_SHA1"
                terraform apply -auto-approve tfapply
@@ -195,6 +195,7 @@ jobs:
           name: Run terraform destroy
           no_output_timeout: 3h
           command: |
+              cd dev-env
               terraform plan -destroy -out tfapply
               terraform apply -destroy -auto-approve tfapply
       - persist_to_workspace:
@@ -208,7 +209,7 @@ workflows:
       and:
         - equal: [true, << pipeline.parameters.use-aws-orbs >>]
     jobs:
-      - build-env
+      - build-dev-env
   docker-workflow:
     when: 
       and: 
@@ -218,7 +219,7 @@ workflows:
   ecs-workflow:
     when: 
       and: 
-       - equal: [true, << pipeline.parameters.use-aws-orbs >>]
+       - equal: [false, << pipeline.parameters.use-aws-orbs >>]
     jobs:
       - build-and-push-image
       - generate-task-definition-config:
