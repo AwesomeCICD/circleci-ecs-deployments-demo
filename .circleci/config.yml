@@ -159,13 +159,8 @@ jobs:
       - run:
           name: Fetch latest ECS task-definition arn
           command: |
-            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
-                --task_definition ecs_demo_task \
-                --output text \
-                --query 'taskDefinition.taskDefinitionArn' \
-                --profile << pipeline.parameters.aws-oidc-profile-name >>)
-            echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
-            $BASH_ENV
+            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition --task-definition ecs_demo_task --output text --query 'taskDefinition.taskDefinitionArn' --profile << pipeline.parameters.aws-oidc-profile-name >>)
+            echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
       - aws-ecs/verify_revision_is_deployed:
           cluster: << pipeline.parameters.ecs-cluster-name >>
           family: << pipeline.parameters.ecs-family-name >> 
