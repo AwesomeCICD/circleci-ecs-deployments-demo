@@ -7,9 +7,9 @@
 #}
 #
 ## Create an ECS Cluster
-#resource "aws_ecs_cluster" "ecs_demo" {
-#  name = "ecs-demo-cluster"
-#}
+resource "aws_ecs_cluster" "ecs_demo" {
+  name = "test-demo-cluster"
+}
 #
 ## Create an ECR repository (if you don't have one)
 #resource "aws_ecr_repository" "ecs_demo" {
