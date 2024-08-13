@@ -174,7 +174,7 @@ jobs:
           profile_name: << pipeline.parameters.aws-oidc-profile-name >>
           task_definition_arn: ${TASK_DEFINITION_ARN}
   
-  build-dev-env:
+  plan-dev-env:
     executor: tf-docker
     steps:
       - checkout
@@ -197,13 +197,37 @@ jobs:
               cat providers.tf
               terraform init -input=false
               terraform plan -out tfapply
-              terraform apply -auto-approve tfapply
-              terraform plan -destroy -out tfapply
-              terraform apply -destroy -auto-approve tfapply
       - persist_to_workspace:
           root: .
           paths:
             - .
+
+  build-dev-env:
+    executor: tf-docker
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - aws-cli/setup:
+          region: << pipeline.parameters.aws-default-region >>
+          role_arn: << pipeline.parameters.aws-oidc-role >>
+          role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+      - run:
+          name: create a providers.tf file and terraform plan and apply
+          no_output_timeout: 3h
+          command: |
+             cd dev-env
+             echo 'provider "aws" {
+                  assume_role {
+                    role_arn     = "<< pipeline.parameters.aws-oidc-role >>"
+                    session_name = "CircleCI-dev-env-build"
+                  }
+                  region = var.aws_region
+                }' > providers.tf
+              cat providers.tf
+              terraform init -input=false
+              terraform apply -auto-approve tfapply
+
 
   destroy-dev-env:
     executor: tf-docker
@@ -229,22 +253,19 @@ jobs:
                 }' > providers.tf
               cat providers.tf
               terraform init -input=false
-              #terraform plan -out tfapply
-              #terraform apply -auto-approve tfapply
               terraform plan -destroy -out tfapply
               terraform apply -destroy -auto-approve tfapply
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
 
 workflows:
-  dev-env-test:
+  dev-env-terraform:
     when:
       and:
         - equal: [true, << pipeline.parameters.use-aws-orbs >>]
     jobs:
-      - build-dev-env
+      - plan-dev-env
+      - build-dev-env:
+           requires:
+              - plan-dev-env
       - destroy-dev-env:
            requires:
               - build-dev-env
