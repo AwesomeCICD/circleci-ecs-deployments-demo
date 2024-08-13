@@ -184,8 +184,10 @@ jobs:
           role_arn: << pipeline.parameters.aws-oidc-role >>
           role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
       - run:
-          name: create a providers.tf file
+          name: create a providers.tf file and terraform plan and apply
+          no_output_timeout: 3h
           command: |
+             cd dev-env
              echo 'provider "aws" {
                   assume_role {
                     role_arn     = "<< pipeline.parameters.aws-oidc-role >>"
@@ -193,19 +195,9 @@ jobs:
                   }
                   region = var.aws_region
                 }' > providers.tf
-      - run:
-          name: Run terraform plan and apply
-          no_output_timeout: 3h
-          command: |
-               cd dev-env
-               terraform init -input=false
-               terraform plan -out tfapply
-               terraform apply -auto-approve tfapply
-      - run:
-          name: Run terraform destroy
-          no_output_timeout: 3h
-          command: |
-              cd dev-env
+              terraform init -input=false
+              terraform plan -out tfapply
+              terraform apply -auto-approve tfapply
               terraform plan -destroy -out tfapply
               terraform apply -destroy -auto-approve tfapply
       - persist_to_workspace:
