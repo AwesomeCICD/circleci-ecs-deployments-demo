@@ -202,7 +202,7 @@ jobs:
           paths:
             - .
 
-  build-dev-env:
+  build-destroy-env:
     executor: tf-docker
     steps:
       - checkout
@@ -227,34 +227,9 @@ jobs:
               cat providers.tf
               terraform init -input=false
               terraform apply -auto-approve tfapply
-
-
-  destroy-dev-env:
-    executor: tf-docker
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - aws-cli/setup:
-          region: << pipeline.parameters.aws-default-region >>
-          role_arn: << pipeline.parameters.aws-oidc-role >>
-          role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
-      - run:
-          name: create a providers.tf file and terraform plan and apply
-          no_output_timeout: 3h
-          command: |
-             cd dev-env
-             echo 'provider "aws" {
-                  assume_role {
-                    role_arn     = "<< pipeline.parameters.aws-oidc-role >>"
-                    session_name = "CircleCI-dev-env-build"
-                  }
-                  region = var.aws_region
-                }' > providers.tf
-              cat providers.tf
-              terraform init -input=false
               terraform plan -destroy -out tfapply
               terraform apply -destroy -auto-approve tfapply
+
 
 workflows:
   dev-env-terraform:
@@ -263,12 +238,10 @@ workflows:
         - equal: [true, << pipeline.parameters.use-aws-orbs >>]
     jobs:
       - plan-dev-env
-      - build-dev-env:
+      - build-destroy-env:
            requires:
               - plan-dev-env
-      - destroy-dev-env:
-           requires:
-              - build-dev-env
+
   docker-workflow:
     when: 
       and: 
