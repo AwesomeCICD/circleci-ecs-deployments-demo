@@ -1,6 +1,6 @@
 # CircleCI ECS Deployments Demo
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/CircleCI-Labs/circleci-ecs-deployments/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/CircleCI-Labs/circleci-ecs-deployments/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/CircleCI-Labs/circleci-ecs-deployments-demo/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/CircleCI-Labs/circleci-ecs-deployments-demo/tree/main)
 
 ---
 
