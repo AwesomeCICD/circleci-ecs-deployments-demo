@@ -40,7 +40,7 @@ commands:
             role_session_name: "CircleCI-${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
             profile_name: << pipeline.parameters.aws-oidc-profile-name >>
 
-  manual-push-to-ecr:
+  build-image-test:
     steps:
       - checkout
       - run:
@@ -63,14 +63,14 @@ commands:
              fi
       - run: docker ps
       - run: docker images
-      - run:
-          when: on_success
-          name: push to ECR if build is successful
-          command: |
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_IMAGE_REPO
-            docker tag $ECS_DEMO_IMAGE:latest $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
-            echo -e "\033[0;32mReady to push image to ECR....\033[0m"
-            docker push $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
+      #- run:
+      #    when: on_success
+      #    name: push to ECR if build is successful
+      #    command: |
+      #      aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_IMAGE_REPO
+      #      docker tag $ECS_DEMO_IMAGE:latest $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
+      #      echo -e "\033[0;32mReady to push image to ECR....\033[0m"
+      #      docker push $ECR_IMAGE_REPO/$ECS_DEMO_IMAGE:latest
 
 
 executors:
@@ -92,6 +92,12 @@ executors:
       AWS_DEFAULT_REGION: << pipeline.parameters.aws-default-region >>
 
 jobs: 
+  build-image-test:
+    executor: ubuntu-default
+    steps:
+      - checkout
+      - build-image-test
+      
   build-and-push-image:
     executor: ubuntu-default
     steps:
@@ -174,6 +180,7 @@ workflows:
       and: 
        - equal: [true, << pipeline.parameters.use-aws-orbs >>]
     jobs:
+      - build-image-test
       - build-and-push-image
       - generate-task-definition-config:
            requires:
