@@ -163,7 +163,9 @@ jobs:
             echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
       - aws-ecs/verify_revision_is_deployed:
           cluster: << pipeline.parameters.ecs-cluster-name >>
-          family: << pipeline.parameters.ecs-family-name >> 
+          family: << pipeline.parameters.ecs-family-name >>
+          service_name: << pipeline.parameters.ecs-service-name >>
+          profile_name: << pipeline.parameters.aws-oidc-profile-name >>
           task_definition_arn: ${TASK_DEFINITION_ARN}
 
 workflows:
