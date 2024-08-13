@@ -1,6 +1,15 @@
 version: 2.1
 
 parameters:
+  ecs-cluster-name:
+    type: string
+    default: "ecs-demo-cluster"
+  ecs-family-name:
+    type: string
+    default: "ecs_demo_task"
+  ecs-service-name:
+    type: string
+    default: "ecs_demo_service"
   account-id:
     type: string
     default: "992382483259"
@@ -133,12 +142,34 @@ jobs:
           profile_name: << pipeline.parameters.aws-oidc-profile-name >> 
           task_definition_json: terraform/my-task-definition.json
       - aws-ecs/update_service:
-          cluster: ecs-demo-cluster
-          family: ecs_demo_task
-          service_name: ecs_demo_service
+          cluster: << pipeline.parameters.ecs-cluster-name >> 
+          family: << pipeline.parameters.ecs-family-name >> 
+          service_name: << pipeline.parameters.ecs-service-name >> 
           skip_task_definition_registration: true
           force_new_deployment: true
           profile_name: << pipeline.parameters.aws-oidc-profile-name >>
+
+  verify-ecs-deployment:
+    docker:
+      - image: cimg/python:3.10.4
+    resource_class: small
+    steps:
+      - checkout
+      - aws-auth-setup
+      - run:
+          name: Fetch latest ECS task-definition arn
+          command: >
+            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+                --task_definition ecs_demo_task \
+                --output text \
+                --query 'taskDefinition.taskDefinitionArn' \
+                --profile << pipeline.parameters.aws-oidc-profile-name >>)
+            echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
+            $BASH_ENV
+      - aws-ecs/verify_revision_is_deployed:
+          cluster: << pipeline.parameters.ecs-cluster-name >>
+          family: << pipeline.parameters.ecs-family-name >> 
+          task_definition_arn: ${TASK_DEFINITION_ARN}
 
 workflows:
   ecs-workflow:
@@ -153,3 +184,6 @@ workflows:
       - deploy-ecs:
            requires:
               - generate-task-definition-config
+      - verify-ecs-deployment:
+           requires:
+              - deploy-ecs
