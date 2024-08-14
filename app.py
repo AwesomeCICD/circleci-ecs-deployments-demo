@@ -23,7 +23,7 @@ def home():
         <title>ECS Flask Container</title>
     </head>
         <body class="bg-gray-100 text-white h-screen flex items-center justify-center">
-            <div class="max-w-3xl w-full bg-gray-800 p-8 rounded-lg shadow-lg">
+            <div class="max-w-4xl w-full bg-gray-800 p-8 rounded-lg shadow-lg">
                 <h1 class="text-2xl font-bold text-center mb-8">ECS Flask Container</h1>
     """
     
