@@ -29,8 +29,8 @@ def home():
     
     # Middle of HTML content with dynamic values
     html_middle = f"""
-        <p class="text-lg mb-2">The <strong>CIRCLE_BUILD_NUM</strong> that built container was: {env_var1}</p>
-        <p class="text-lg">The<strong>CIRCLE_SHA</strong> that built this container was: {env_var2}</p>
+        <p class="text-lg mb-2">The <strong>CIRCLE_BUILD_NUM</strong> that built this container was: {env_var1}</p>
+        <p class="text-lg">The <strong>CIRCLE_SHA</strong> commit that built this container was: {env_var2}</p>
     """
     
     # End of HTML content
