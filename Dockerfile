@@ -21,4 +21,4 @@ ENV ENV_VAR1=ECR_IMAGE_REPO
 ENV ENV_VAR2=CIRCLE_SHA1
 
 # Run app.py when the container launches
-CMD ["python", "app.py"]
+CMD ["python", "app2.py"]
