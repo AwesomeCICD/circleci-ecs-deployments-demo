@@ -22,15 +22,15 @@ def home():
         
         <title>ECS Flask Container</title>
     </head>
-    <body class="bg-blue-900 text-white h-screen flex items-center justify-center">
-        <div class="max-w-md w-full bg-blue-800 p-8 rounded-lg shadow-lg">
-            <h1 class="text-2xl font-bold text-center mb-4">ECS Flask Container</h1>
+        <body class="bg-blue-980 text-white h-screen flex items-center justify-center">
+            <div class="max-w-3xl w-full bg-blue-860 p-8 rounded-lg shadow-lg">
+                <h1 class="text-2xl font-bold text-center mb-8">ECS Flask Container</h1>
     """
     
     # Middle of HTML content with dynamic values
     html_middle = f"""
-            <p class="text-lg mb-2"><strong>CIRCLE_BUILD_NUM:</strong> {env_var1}</p>
-            <p class="text-lg"><strong>CIRCLE_SHA:</strong> {env_var2}</p>
+        <p class="text-lg mb-2">The <strong>CIRCLE_BUILD_NUM</strong> that built container was: {env_var1}</p>
+        <p class="text-lg">The<strong>CIRCLE_SHA</strong> that built this container was: {env_var2}</p>
     """
     
     # End of HTML content
