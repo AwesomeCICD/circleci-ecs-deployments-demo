@@ -1,4 +1,4 @@
-## Use only if you are using AWS Keys
+## Use only if you are using AWS Keys...
 #variable "aws_access_key" {
 #  description = "Access key used to create instances"
 #}
